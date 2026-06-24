@@ -28,13 +28,123 @@
   .success { display: none; text-align: center; padding: 2rem 0; }
   .success h2 { color: #0F6E56; font-size: 20px; margin-bottom: 8px; }
   .success p { color: #555; font-size: 14px; }
+  .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; padding: 1rem; }
+  .overlay.active { display: flex; }
+  .popup { background: white; border-radius: 14px; padding: 1.5rem;
+    max-width: 380px; width: 100%; text-align: center; }
+  .popup-icon { font-size: 36px; margin-bottom: 10px; }
+  .popup h2 { font-size: 17px; font-weight: 600; margin-bottom: 10px; color: #1a1a1a; }
+  .popup p { font-size: 14px; color: #555; line-height: 1.6; margin-bottom: 1.2rem; }
+  .popup button { background: #185FA5; color: white; border: none; border-radius: 8px;
+    padding: 11px 28px; font-size: 15px; font-weight: 600; cursor: pointer; }
 </style>
 </head>
 <body>
+
+<div class="overlay" id="popup">
+  <div class="popup">
+    <div class="popup-icon">&#9888;&#65039;</div>
+    <h2>Wichtiger Hinweis</h2>
+    <p>Falls das Gerät defekt ist (Display o.&#228;.) oder aus anderen Gr&#252;nden nicht mehr nutzbar ist, bitte im Konrektorat abgeben. Danke!</p>
+    <button onclick="closePopup()">Verstanden</button>
+  </div>
+</div>
+
 <div class="card">
   <div id="formSection">
     <div class="header">
       <img src="images.jpeg" alt="Schullogo" class="logo"><br>
+      <div class="badge">Geräteschaden melden</div>
+      <h1>Geräteschaden melden</h1>
+      <p class="room-info" id="roomInfo">Bitte Schaden beschreiben</p>
+    </div>
+    <form id="damageForm">
+      <input type="hidden" name="_cc" value="diefenbach.sandra@schule-am-schlossplatz.de,schuler.maren@schule-am-schlossplatz.de,connell.david@schule-am-schlossplatz.de">
+
+      <label>Gerät *</label>
+      <select name="Geraet" required>
+        <option value="">Bitte auswählen...</option>
+        <option>iPad</option>
+        <option>Surface</option>
+      </select>
+
+      <label>Gerätenummer *</label>
+      <input type="text" name="Geraetnummer" required
+        placeholder="Nummer laut Aufkleber oder Bezeichnung">
+
+      <label>Art des Schadens *</label>
+      <select name="Schadensart" required>
+        <option value="">Bitte auswählen...</option>
+        <option>Internet / Apps</option>
+        <option>Displayschaden</option>
+        <option>Hülle defekt / fehlt</option>
+        <option>Ladekabel defekt</option>
+        <option>Gerät fehlt</option>
+      </select>
+
+      <label>Beschreibung (optional)</label>
+      <textarea name="Beschreibung"
+        placeholder="Genauere Beschreibung des Schadens"></textarea>
+
+      <label>Gemeldet von</label>
+      <input type="text" name="Gemeldet-von"
+        placeholder="Kürzel der Lehrkraft oder Name des Kindes">
+
+      <button type="submit">Schaden melden</button>
+      <p class="note">Kein Konto erforderlich.</p>
+    </form>
+  </div>
+  <div class="success" id="successMsg">
+    <img src="images.jpeg" alt="Schullogo" class="logo"><br>
+    <h2>&#10003; Meldung eingegangen</h2>
+    <p>Danke! Die Verwaltung wurde benachrichtigt.</p>
+  </div>
+</div>
+
+<script>
+  const FORMSPREE = 'https://formspree.io/f/mgojopdd';
+  const SHEETS = 'https://script.google.com/macros/s/AKfycbyDuRlwoETYoCkOra2K6aN4PIjT_6zLlse5pzrZSKvKy2tv-Di_h6ghxtmR7CFOJgkv/exec';
+
+  const p = new URLSearchParams(window.location.search);
+  const raum = p.get('name') || p.get('raum') || 'Unbekannter Raum';
+  document.getElementById('roomInfo').textContent = raum;
+
+  function closePopup() {
+    document.getElementById('popup').classList.remove('active');
+    document.getElementById('formSection').style.display = 'none';
+    document.getElementById('successMsg').style.display = 'block';
+  }
+
+  document.getElementById('damageForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const data = {};
+    new FormData(form).forEach((v, k) => data[k] = v);
+    data['Raum'] = raum;
+
+    try {
+      await Promise.all([
+        fetch(FORMSPREE, {
+          method: 'POST',
+          body: (() => { const fd = new FormData(form); fd.append('Raum', raum); return fd; })(),
+          headers: { 'Accept': 'application/json' }
+        }),
+        fetch(SHEETS, {
+          method: 'POST',
+          body: JSON.stringify(data),
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'no-cors'
+        })
+      ]);
+      document.getElementById('popup').classList.add('active');
+    } catch(err) {
+      alert('Fehler beim Senden. Bitte nochmals versuchen.');
+    }
+  });
+</script>
+</body>
+</html>      <img src="images.jpeg" alt="Schullogo" class="logo"><br>
       <div class="badge">Geräteschaden melden</div>
       <h1>Geräteschaden melden</h1>
       <p class="room-info" id="roomInfo">Bitte Schaden beschreiben</p>
