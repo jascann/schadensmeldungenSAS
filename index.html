@@ -1,10 +1,9 @@
- Code kopieren
 <!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>iPad-Schaden melden</title>
+<title>Geräteschaden melden</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, sans-serif; background: #f4f4f4;
@@ -18,7 +17,7 @@
   label { display: block; font-size: 13px; color: #444; margin-bottom: 5px; }
   input, select, textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px;
     padding: 10px 12px; font-size: 15px; margin-bottom: 14px; color: #1a1a1a;
-    background: white; font-family: inherit; }
+    background: white; font-family: inherit; appearance: none; }
   textarea { height: 80px; resize: vertical; }
   button[type=submit] { width: 100%; background: #185FA5; color: white;
     border: none; border-radius: 8px; padding: 13px; font-size: 16px;
@@ -32,32 +31,43 @@
 <body>
 <div class="card">
   <div id="formSection">
-    <div class="badge">iPad-Schaden melden</div>
-    <h1>Schadensfall eintragen</h1>
+    <div class="badge">Geräteschaden melden</div>
+    <h1>Geräteschaden melden</h1>
     <p class="room-info" id="roomInfo">Bitte Schaden beschreiben</p>
     <form id="damageForm"
       action="https://formspree.io/f/mgojopdd"
       method="POST">
       <input type="hidden" name="Raum" id="raumField">
-      <label>iPad-Nummer *</label>
-      <input type="text" name="iPad-Nummer" required
-        placeholder="Aufkleber-Nummer oder Bezeichnung">
+
+      <label>Gerät *</label>
+      <select name="Geraet" required>
+        <option value="">Bitte auswählen...</option>
+        <option>iPad</option>
+        <option>Surface</option>
+      </select>
+
+      <label>Gerätenummer *</label>
+      <input type="text" name="Geraetnummer" required
+        placeholder="Nummer laut Aufkleber oder Bezeichnung">
+
       <label>Art des Schadens *</label>
       <select name="Schadensart" required>
         <option value="">Bitte auswählen...</option>
-        <option>Displayriss / Displayschaden</option>
-        <option>Gehäuseschaden</option>
-        <option>Ladeproblem / Kabel</option>
-        <option>Software-Problem</option>
-        <option>Zubehör fehlt / defekt</option>
-        <option>Sonstiges</option>
+        <option>Internet / Apps</option>
+        <option>Displayschaden</option>
+        <option>Hülle defekt / fehlt</option>
+        <option>Ladekabel defekt</option>
+        <option>Gerät fehlt</option>
       </select>
-      <label>Genauere Beschreibung</label>
+
+      <label>Beschreibung (optional)</label>
       <textarea name="Beschreibung"
-        placeholder="Was ist passiert? (optional)"></textarea>
-      <label>Gemeldet von (optional)</label>
+        placeholder="Genauere Beschreibung des Schadens"></textarea>
+
+      <label>Gemeldet von</label>
       <input type="text" name="Gemeldet-von"
-        placeholder="Lehrkraft oder Klasse">
+        placeholder="Kürzel der Lehrkraft oder Name des Kindes">
+
       <button type="submit">Schaden melden</button>
       <p class="note">Kein Konto erforderlich.</p>
     </form>
