@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schadensmeldungen – Übersicht</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, sans-serif; background: #f4f4f4; min-height: 100vh; }
+  .topbar { background: white; border-bottom: 1px solid #eee; padding: 14px 1.5rem;
+    display: flex; align-items: center; justify-content: space-between; }
+  .topbar h1 { font-size: 17px; font-weight: 600; }
+  .filters { padding: 1rem 1.5rem; display: flex; gap: 10px; flex-wrap: wrap; }
+  .filters select { border: 1px solid #ddd; border-radius: 8px; padding: 7px 12px;
+    font-size: 13px; background: white; color: #1a1a1a; }
+  .stats { display: flex; gap: 10px; padding: 0 1.5rem 1rem; flex-wrap: wrap; }
+  .stat { background: white; border-radius: 8px; padding: 10px 16px; flex: 1; min-width: 100px;
+    border: 1px solid #eee; text-align: center; }
+  .stat-num { font-size: 22px; font-weight: 700; }
+  .stat-label { font-size: 11px; color: #888; margin-top: 2px; }
+  .stat.offen .stat-num { color: #E24B4A; }
+  .stat.inarbeit .stat-num { color: #BA7517; }
+  .stat.erledigt .stat-num { color: #0F6E56; }
+  .table-wrap { padding: 0 1.5rem 2rem; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; background: white;
+    border-radius: 10px; overflow: hidden; border: 1px solid #eee; font-size: 13px; }
+  th { background: #f8f8f8; padding: 10px 12px; text-align: left;
+    font-weight: 600; color: #555; border-bottom: 1px solid #eee; white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 0.5px solid #f0f0f0; color: #1a1a1a; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafafa; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 3px 8px; border-radius: 20px; }
+  .badge.Offen { background: #FCEBEB; color: #A32D2D; }
+  .badge.InArbeit { background: #FAEEDA; color: #854F0B; }
+  .badge.Erledigt { background: #EAF3DE; color: #3B6D11; }
+  .empty { text-align: center; padding: 3rem; color: #aaa; font-size: 14px; }
+  #loginScreen { display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; background: #f4f4f4; }
+  .login-card { background: white; border-radius: 12px; padding: 2rem;
+    max-width: 340px; width: 100%; box-shadow: 0 2px 12px rgba(0,0,0,0.08); text-align: center; }
+  .login-card h2 { font-size: 18px; margin-bottom: 6px; }
+  .login-card p { font-size: 13px; color: #888; margin-bottom: 1.2rem; }
+  .login-card input { width: 100%; border: 1px solid #ddd; border-radius: 8px;
+    padding: 10px 12px; font-size: 15px; margin-bottom: 12px; text-align: center;
+    letter-spacing: 4px; }
+  .login-card button { width: 100%; background: #185FA5; color: white;
+    border: none; border-radius: 8px; padding: 11px; font-size: 15px;
+    font-weight: 600; cursor: pointer; }
+  .login-error { color: #E24B4A; font-size: 13px; margin-top: 8px; display: none; }
+  #mainScreen { display: none; }
+  .refresh-btn { font-size: 12px; padding: 6px 12px; cursor: pointer;
+    border: 1px solid #ddd; border-radius: 6px; background: white; color: #555; }
+  .loading { text-align: center; padding: 3rem; color: #aaa; }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-card">
+    <h2>🔒 Übersicht</h2>
+    <p>Schadensmeldungen – nur für Verwaltung</p>
+    <input type="password" id="pwInput" placeholder="Passwort" onkeydown="if(event.key==='Enter')login()">
+    <button onclick="login()">Anmelden</button>
+    <div class="login-error" id="loginError">Falsches Passwort</div>
+  </div>
+</div>
+
+<div id="mainScreen">
+  <div class="topbar">
+    <h1>Schadensmeldungen</h1>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="refresh-btn" onclick="loadData()">↻ Aktualisieren</button>
+      <span id="lastUpdate" style="font-size:13px;color:#888;"></span>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="filters">
+    <select id="filterStatus" onchange="renderTable()">
+      <option value="">Alle Status</option>
+      <option value="Offen">Offen</option>
+      <option value="In Bearbeitung">In Bearbeitung</option>
+      <option value="Erledigt">Erledigt</option>
+    </select>
+    <select id="filterGeraet" onchange="renderTable()">
+      <option value="">Alle Geräte</option>
+      <option value="iPad">iPad</option>
+      <option value="Surface">Surface</option>
+    </select>
+    <select id="filterSchaden" onchange="renderTable()">
+      <option value="">Alle Schadensarten</option>
+      <option>Internet / Apps</option>
+      <option>Displayschaden</option>
+      <option>Hülle defekt / fehlt</option>
+      <option>Ladekabel defekt</option>
+      <option>Gerät fehlt</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Datum</th>
+          <th>Raum</th>
+          <th>Gerät</th>
+          <th>Nr.</th>
+          <th>Schaden</th>
+          <th>Beschreibung</th>
+          <th>Gemeldet von</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const PASSWORD = 'SAS';
+  const SHEET_ID = '1QgmmvTC0pk7HII8sSOUO7r9K7o9qehNAJYiFQmHpmbE';
+  const SHEET_NAME = 'Tabellenblatt1';
+
+  let allRows = [];
+
+  function login() {
+    const pw = document.getElementById('pwInput').value;
+    if (pw === PASSWORD) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainScreen').style.display = 'block';
+      loadData();
+    } else {
+      document.getElementById('loginError').style.display = 'block';
+    }
+  }
+
+  async function loadData() {
+    document.getElementById('tableBody').innerHTML = '<tr><td colspan="8" class="loading">Daten werden geladen...</td></tr>';
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+    try {
+      const res = await fetch(url);
+      const text = await res.text();
+      const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+      const rows = json.table.rows;
+      allRows = rows.map(r => ({
+        datum: r.c[0]?.v ? new Date(r.c[0].v) : null,
+        raum: r.c[1]?.v || '',
+        geraet: r.c[2]?.v || '',
+        nummer: r.c[3]?.v || '',
+        schaden: r.c[4]?.v || '',
+        beschreibung: r.c[5]?.v || '',
+        gemeldet: r.c[6]?.v || '',
+        status: r.c[7]?.v || 'Offen',
+      })).filter(r => r.raum || r.geraet);
+      document.getElementById('lastUpdate').textContent = 'Stand: ' + new Date().toLocaleTimeString('de-DE');
+      renderStats();
+      renderTable();
+    } catch(err) {
+      document.getElementById('tableBody').innerHTML = '<tr><td colspan="8" class="empty">Fehler beim Laden – bitte Sheet freigeben (Jeder mit Link – Betrachter).</td></tr>';
+    }
+  }
+
+  function renderStats() {
+    const offen = allRows.filter(r => r.status === 'Offen').length;
+    const inarbeit = allRows.filter(r => r.status === 'In Bearbeitung').length;
+    const erledigt = allRows.filter(r => r.status === 'Erledigt').length;
+    document.getElementById('stats').innerHTML = `
+      <div class="stat offen"><div class="stat-num">${offen}</div><div class="stat-label">Offen</div></div>
+      <div class="stat inarbeit"><div class="stat-num">${inarbeit}</div><div class="stat-label">In Bearbeitung</div></div>
+      <div class="stat erledigt"><div class="stat-num">${erledigt}</div><div class="stat-label">Erledigt</div></div>
+      <div class="stat"><div class="stat-num">${allRows.length}</div><div class="stat-label">Gesamt</div></div>
+    `;
+  }
+
+  function renderTable() {
+    const fs = document.getElementById('filterStatus').value;
+    const fg = document.getElementById('filterGeraet').value;
+    const fsc = document.getElementById('filterSchaden').value;
+    let rows = allRows.filter(r =>
+      (!fs || r.status === fs) &&
+      (!fg || r.geraet === fg) &&
+      (!fsc || r.schaden === fsc)
+    ).sort((a,b) => (b.datum||0) - (a.datum||0));
+
+    if (rows.length === 0) {
+      document.getElementById('tableBody').innerHTML = '<tr><td colspan="8" class="empty">Keine Einträge gefunden.</td></tr>';
+      return;
+    }
+    document.getElementById('tableBody').innerHTML = rows.map(r => {
+      const statusClass = r.status === 'In Bearbeitung' ? 'InArbeit' : r.status;
+      const datum = r.datum ? r.datum.toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '–';
+      return `<tr>
+        <td style="white-space:nowrap;font-size:12px;color:#888">${datum}</td>
+        <td>${r.raum}</td>
+        <td>${r.geraet}</td>
+        <td><strong>${r.nummer}</strong></td>
+        <td>${r.schaden}</td>
+        <td style="color:#666;font-size:12px">${r.beschreibung}</td>
+        <td>${r.gemeldet}</td>
+        <td><span class="badge ${statusClass}">${r.status}</span></td>
+      </tr>`;
+    }).join('');
+  }
+</script>
+</body>
+</html>
