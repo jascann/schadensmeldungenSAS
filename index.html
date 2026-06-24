@@ -1,0 +1,92 @@
+ Code kopieren
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iPad-Schaden melden</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, sans-serif; background: #f4f4f4;
+    display: flex; justify-content: center; padding: 1.5rem 1rem; min-height: 100vh; }
+  .card { background: white; border-radius: 12px; padding: 1.5rem;
+    max-width: 480px; width: 100%; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+  .badge { display: inline-block; background: #E6F1FB; color: #0C447C;
+    font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 20px; }
+  h1 { font-size: 20px; font-weight: 600; margin: 10px 0 4px; }
+  .room-info { color: #666; font-size: 13px; margin-bottom: 1.2rem; }
+  label { display: block; font-size: 13px; color: #444; margin-bottom: 5px; }
+  input, select, textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px;
+    padding: 10px 12px; font-size: 15px; margin-bottom: 14px; color: #1a1a1a;
+    background: white; font-family: inherit; }
+  textarea { height: 80px; resize: vertical; }
+  button[type=submit] { width: 100%; background: #185FA5; color: white;
+    border: none; border-radius: 8px; padding: 13px; font-size: 16px;
+    font-weight: 600; cursor: pointer; margin-top: 4px; }
+  .note { font-size: 12px; color: #999; text-align: center; margin-top: 10px; }
+  .success { display: none; text-align: center; padding: 2rem 0; }
+  .success h2 { color: #0F6E56; font-size: 20px; margin-bottom: 8px; }
+  .success p { color: #555; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="formSection">
+    <div class="badge">iPad-Schaden melden</div>
+    <h1>Schadensfall eintragen</h1>
+    <p class="room-info" id="roomInfo">Bitte Schaden beschreiben</p>
+    <form id="damageForm"
+      action="https://formspree.io/f/mgojopdd"
+      method="POST">
+      <input type="hidden" name="Raum" id="raumField">
+      <label>iPad-Nummer *</label>
+      <input type="text" name="iPad-Nummer" required
+        placeholder="Aufkleber-Nummer oder Bezeichnung">
+      <label>Art des Schadens *</label>
+      <select name="Schadensart" required>
+        <option value="">Bitte auswählen...</option>
+        <option>Displayriss / Displayschaden</option>
+        <option>Gehäuseschaden</option>
+        <option>Ladeproblem / Kabel</option>
+        <option>Software-Problem</option>
+        <option>Zubehör fehlt / defekt</option>
+        <option>Sonstiges</option>
+      </select>
+      <label>Genauere Beschreibung</label>
+      <textarea name="Beschreibung"
+        placeholder="Was ist passiert? (optional)"></textarea>
+      <label>Gemeldet von (optional)</label>
+      <input type="text" name="Gemeldet-von"
+        placeholder="Lehrkraft oder Klasse">
+      <button type="submit">Schaden melden</button>
+      <p class="note">Kein Konto erforderlich.</p>
+    </form>
+  </div>
+  <div class="success" id="successMsg">
+    <h2>&#10003; Meldung eingegangen</h2>
+    <p>Danke! Die Verwaltung wurde benachrichtigt.</p>
+  </div>
+</div>
+<script>
+  const p = new URLSearchParams(window.location.search);
+  const raum = p.get('name') || p.get('raum') || 'Unbekannter Raum';
+  document.getElementById('roomInfo').textContent = raum;
+  document.getElementById('raumField').value = raum;
+  document.getElementById('damageForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const data = new FormData(form);
+    const res = await fetch(form.action, {
+      method: 'POST', body: data,
+      headers: { 'Accept': 'application/json' }
+    });
+    if (res.ok) {
+      document.getElementById('formSection').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    } else {
+      alert('Fehler beim Senden. Bitte nochmals versuchen.');
+    }
+  });
+</script>
+</body>
+</html>
